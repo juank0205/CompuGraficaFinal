@@ -216,13 +216,10 @@ public class PlayerMovement : MonoBehaviour {
         //Iterate through every collision in a physics update
         for (int i = 0; i < other.contactCount; i++) {
             Vector3 normal = other.contacts[i].normal;
-            //FLOOR
-            if (IsFloor(normal)) {
-                grounded = true;
-                cancellingGrounded = false;
-                normalVector = normal;
-                CancelInvoke(nameof(StopGrounded));
-            }
+            grounded = true;
+            cancellingGrounded = false;
+            normalVector = normal;
+            CancelInvoke(nameof(StopGrounded));
         }
 
         //Invoke ground/wall cancel, since we can't check normals with CollisionExit
