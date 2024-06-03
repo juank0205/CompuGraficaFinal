@@ -8,6 +8,7 @@ using UnityEngine.Animations;
 public class PlayerMovement : MonoBehaviour {
     public Transform playerCam;
     public Transform orientation;
+    public GameObject hands;
 
     private Rigidbody rb;
 
@@ -30,6 +31,7 @@ public class PlayerMovement : MonoBehaviour {
     public float crouchHeightChange = 0.5f;
     private Vector3 crouchScale = new Vector3(1, 0.5f, 1);
     private Vector3 playerScale;
+    private Vector3 handsScale;
     public float slideForce = 400;
     public float slideCounterMovement = 0.2f;
     private bool sliding;
@@ -49,18 +51,26 @@ public class PlayerMovement : MonoBehaviour {
     private Vector3 normalVector = Vector3.up;
     private Vector3 wallNormalVector;
 
-    private void Awake() {
-        rb = GetComponent<Rigidbody>();
-    }
+    //Animations
+    private Animator animator;
 
     void Start() {
+        GetReferences();
         playerScale = transform.localScale;
+        handsScale = new Vector3(crouchScale.x, crouchScale.y * 4, crouchScale.z);
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
+    private void GetReferences()
+    {
+        rb = GetComponent<Rigidbody>();
+        animator = GetComponentInChildren<Animator>();
+    }
+
     private void FixedUpdate() {
         Movement();
+        HandleAnimations();
     }
 
     private void Update() {
@@ -147,6 +157,8 @@ public class PlayerMovement : MonoBehaviour {
         transform.localScale = crouchScale;
         transform.position = new Vector3(transform.position.x, transform.position.y - crouchHeightChange, transform.position.z);
 
+        hands.transform.localScale = handsScale;
+
         if (rb.velocity.magnitude >= maxSpeed * 0.9f && grounded && !sliding) {
             Vector3 vel = rb.velocity;
             vel = vel.normalized;
@@ -163,6 +175,8 @@ public class PlayerMovement : MonoBehaviour {
     private void StopCrouch() {
         transform.localScale = playerScale;
         transform.position = new Vector3(transform.position.x, transform.position.y + crouchHeightChange, transform.position.z);
+
+        hands.transform.localScale = playerScale;
     }
 
     private float desiredX;
@@ -177,7 +191,7 @@ public class PlayerMovement : MonoBehaviour {
         xRotation = Mathf.Clamp(xRotation, -45f, 45f);
 
         playerCam.transform.localRotation = Quaternion.Euler(xRotation, desiredX, 0);
-        orientation.transform.localRotation = Quaternion.Euler(0, desiredX, 0);
+        orientation.transform.localRotation = Quaternion.Euler(xRotation, desiredX, 0);
     }
     private bool IsFloor(Vector3 v) {
         float angle = Vector3.Angle(Vector3.up, v);
@@ -232,6 +246,14 @@ public class PlayerMovement : MonoBehaviour {
 
     private void StopGrounded() {
         grounded = false;
+    }
+
+    private void HandleAnimations()
+    {
+        if (rb.velocity.magnitude <= 0.5f)
+            animator.SetFloat("Speed", 0, 0.2f, Time.deltaTime);
+        else
+            animator.SetFloat("Speed", 0.6f, 0.2f, Time.deltaTime);
     }
 
 }

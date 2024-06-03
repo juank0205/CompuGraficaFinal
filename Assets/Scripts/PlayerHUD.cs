@@ -6,13 +6,12 @@ using UnityEngine.UI;
 
 public class PlayerHUD : MonoBehaviour
 {
-    [SerializeField] private TextMeshProUGUI currentHealthText;
-    [SerializeField] private TextMeshProUGUI maxHealthText;
+    public Image fill;
 
-    public void UpdateHealth(int currentHealth, int maxHealth)
+    public void UpdateHealth(float currentHealth, float maxHealth)
     {
-        currentHealthText.text = currentHealth.ToString();
-        maxHealthText.text = maxHealth.ToString();
+        float ratio = currentHealth / maxHealth;
+        fill.fillAmount = ratio;
     }
 
 }
