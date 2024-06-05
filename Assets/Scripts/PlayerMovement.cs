@@ -188,7 +188,7 @@ public class PlayerMovement : MonoBehaviour {
         desiredX = mouseX + rot.y;
 
         xRotation -= mouseY;
-        xRotation = Mathf.Clamp(xRotation, -45f, 45f);
+        xRotation = Mathf.Clamp(xRotation, -80f, 80f);
 
         playerCam.transform.localRotation = Quaternion.Euler(xRotation, desiredX, 0);
         orientation.transform.localRotation = Quaternion.Euler(xRotation, desiredX, 0);
