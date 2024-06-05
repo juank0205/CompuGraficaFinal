@@ -2,6 +2,7 @@ using Palmmedia.ReportGenerator.Core.CodeAnalysis;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Animations;
 
@@ -43,6 +44,9 @@ public class PlayerMovement : MonoBehaviour {
     private float jumpCooldown = 0.25f;
     public float jumpForce = 550f;
 
+    //Grapple
+    private bool grappling = false;
+
     //Input
     float x, y;
     bool jumping, sprinting, crouching;
@@ -79,7 +83,7 @@ public class PlayerMovement : MonoBehaviour {
     }
 
     private void Movement() {
-        rb.AddForce(Vector3.down * Time.deltaTime * 10);
+        GroundPull();
 
         Vector2 mag = FindVelRelativeToLook();
         float xMag = mag.x, yMag = mag.y;
@@ -93,17 +97,32 @@ public class PlayerMovement : MonoBehaviour {
 
         float multiplier = 1f, multiplierV = 1f;
         float maxSpeed = this.maxSpeed;
-        if (!grounded) multiplier = 0.5f;
+        if (!grounded) multiplier = 0.8f;
         if (!sliding && crouching) {
             multiplierV = 0.5f;
             maxSpeed *= crouchMultiplier;
         }
 
+        ControlSpeed(xMag, yMag, maxSpeed);
+
+        Vector3 forward = orientation.transform.forward;
+        Vector3 right = orientation.transform.right;
+        forward.y = 0;
+        right.y = 0;
+
+        rb.AddForce(forward.normalized * y * moveSpeed * Time.deltaTime * multiplier * multiplierV);
+        rb.AddForce(right.normalized * x * moveSpeed * Time.deltaTime * multiplier * multiplierV);
+    }
+
+    private void GroundPull() {
+        if (Grappling) return;
+        rb.AddForce(Vector3.down * Time.deltaTime * 10);
+    }
+
+    private void ControlSpeed(float xMag, float yMag, float maxSpeed) {
+        if (Grappling) return;
         if (Mathf.Abs(x) > 0 && Mathf.Abs(xMag) > maxSpeed) x = 0;
         if (Mathf.Abs(y) > 0 && Mathf.Abs(yMag) > maxSpeed) y = 0;
-
-        rb.AddForce(orientation.transform.forward * y * moveSpeed * Time.deltaTime * multiplier * multiplierV);
-        rb.AddForce(orientation.transform.right * x * moveSpeed * Time.deltaTime * multiplier * multiplierV);
     }
 
     public Vector2 FindVelRelativeToLook() {
@@ -124,8 +143,8 @@ public class PlayerMovement : MonoBehaviour {
         if (grounded && readyToJump) {
             readyToJump = false;
 
-            rb.AddForce(Vector2.up * jumpForce * 1.5f);
-            rb.AddForce(normalVector * jumpForce * 0.5f);
+            rb.AddForce(Vector2.up * jumpForce * 1f);
+            rb.AddForce(normalVector * jumpForce * 1f);
 
             Vector3 vel = rb.velocity;
             if (rb.velocity.y < 0.5f)
@@ -142,6 +161,7 @@ public class PlayerMovement : MonoBehaviour {
     }
 
     private void getInput() {
+        if (Grappling) return;
         x = Input.GetAxisRaw("Horizontal");
         y = Input.GetAxisRaw("Vertical");
         jumping = Input.GetButton("Jump");
@@ -222,6 +242,8 @@ public class PlayerMovement : MonoBehaviour {
 
     private bool cancellingGrounded;
 
+    public bool Grappling { get => grappling; set => grappling = value; }
+
     private void OnCollisionStay(Collision other) {
         //Make sure we are only checking for walkable layers
         int layer = other.gameObject.layer;
@@ -243,6 +265,9 @@ public class PlayerMovement : MonoBehaviour {
             Invoke(nameof(StopGrounded), Time.deltaTime * delay);
         }
     }
+    private void OnCollisionEnter(Collision collision) {
+        if (Grappling) Grappling = false;
+    }
 
     private void StopGrounded() {
         grounded = false;
@@ -256,4 +281,24 @@ public class PlayerMovement : MonoBehaviour {
             animator.SetFloat("Speed", 0.6f, 0.2f, Time.deltaTime);
     }
 
+    private Vector3 velocityToSet;
+    private void SetVelocity() {
+        rb.velocity = velocityToSet;
+    }
+
+    public void JumpToPosition(Vector3 targetPosition, float trajectoryHeight) {
+        velocityToSet = CalculateVelocityNeeded(transform.position, targetPosition, trajectoryHeight);
+        Invoke(nameof(SetVelocity), 0.1f);
+    }
+
+    private Vector3 CalculateVelocityNeeded(Vector3 startPoint, Vector3 endPoint, float trajectoryHeight) {
+        float gravity = Physics.gravity.y;
+        float displacementY = endPoint.y - startPoint.y;
+        Vector3 displacementXZ = new Vector3(endPoint.x - startPoint.x, 0f, endPoint.z - startPoint.z);
+
+        Vector3 velocityY = Vector3.up * Mathf.Sqrt(-2 * gravity * trajectoryHeight);
+        Vector3 velocityXZ = displacementXZ / (Mathf.Sqrt(-2 * trajectoryHeight / gravity) + Mathf.Sqrt(2 * (displacementY - trajectoryHeight) / gravity));
+
+        return velocityXZ + velocityY;
+    }
 }

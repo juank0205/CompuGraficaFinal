@@ -9,6 +9,7 @@ public class WeaponShooting : MonoBehaviour {
     public GameObject bullet;
     public GameObject flash;
     private PlayerHUD hud;
+    private Animator animator;
 
     //Transforms
     public Transform orientation;
@@ -22,17 +23,20 @@ public class WeaponShooting : MonoBehaviour {
     private int magazineAmmo = 0;
     private int ammoLeft = 0;
 
+    private bool reloading = false;
+
     private void Start() {
         GetReferences();
         InitilizeAmmo();
     }
 
     private void GetReferences() {
-        cam = Camera.main;
         hud = GetComponent<PlayerHUD>();
+        animator = GetComponentInChildren<Animator>();
     }
 
     private void Update() {
+        if (reloading) return;
         if (Input.GetButtonDown("Fire1"))
             Shoot();
 
@@ -57,6 +61,8 @@ public class WeaponShooting : MonoBehaviour {
     }
 
     private void Reload() {
+        reloading = true;
+        animator.SetTrigger("Reload");
         int ammoNeeded = weapon.magazineSize - magazineAmmo;
         if (ammoLeft >= ammoNeeded) {
             ammoLeft -= ammoNeeded;
@@ -66,6 +72,11 @@ public class WeaponShooting : MonoBehaviour {
             ammoLeft = 0;
         }
         hud.UpdateAmmo(magazineAmmo, ammoLeft);
+        Invoke(nameof(ResetReloading), 1f);
+    }
+
+    private void ResetReloading() {
+        reloading = false;
     }
 
     private void SpawnBullet() {
