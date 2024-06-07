@@ -6,15 +6,16 @@ using UnityEngine;
 public class WeaponShooting : MonoBehaviour {
     //GameObjects
     private Camera cam;
-    public GameObject bullet;
-    public GameObject flash;
+    [SerializeField] private GameObject bullet;
+    [SerializeField] private GameObject flash;
     private PlayerHUD hud;
     private Animator animator;
+    private PlayerStats playerStats;
 
     //Transforms
-    public Transform orientation;
-    public Transform spawnerPosition;
-    public Transform flashPosition;
+    [SerializeField] private Transform orientation;
+    [SerializeField] private Transform spawnerPosition;
+    [SerializeField] private Transform flashPosition;
 
     //Weapon
     public Weapon weapon;
@@ -33,10 +34,11 @@ public class WeaponShooting : MonoBehaviour {
     private void GetReferences() {
         hud = GetComponent<PlayerHUD>();
         animator = GetComponentInChildren<Animator>();
+        playerStats = GetComponentInChildren<PlayerStats>();
     }
 
     private void Update() {
-        if (reloading) return;
+        if (reloading || playerStats.IsDead()) return;
         if (Input.GetButtonDown("Fire1"))
             Shoot();
 
@@ -44,7 +46,7 @@ public class WeaponShooting : MonoBehaviour {
             Reload();
     }
 
-    private void InitilizeAmmo() {
+    public void InitilizeAmmo() {
         magazineAmmo = weapon.magazineSize;
         ammoLeft = weapon.magazineSize * weapon.magazineCount;
         hud.UpdateAmmo(magazineAmmo, ammoLeft);
@@ -61,6 +63,7 @@ public class WeaponShooting : MonoBehaviour {
     }
 
     private void Reload() {
+        if (ammoLeft == 0 || magazineAmmo == weapon.magazineSize) return;
         reloading = true;
         animator.SetTrigger("Reload");
         int ammoNeeded = weapon.magazineSize - magazineAmmo;
@@ -82,6 +85,7 @@ public class WeaponShooting : MonoBehaviour {
     private void SpawnBullet() {
         GameObject instantiatedBullet = Instantiate(bullet, spawnerPosition.position, orientation.rotation);
         Instantiate(flash, flashPosition.position, orientation.rotation);
+        instantiatedBullet.GetComponent<Bullet>().SetDamage(weapon.damage);
         Rigidbody rb = instantiatedBullet.GetComponent<Rigidbody>();
         rb.AddForce(orientation.forward * bulletSpeed, ForceMode.Impulse);
         Destroy(instantiatedBullet, 5f);

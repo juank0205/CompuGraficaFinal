@@ -12,6 +12,7 @@ public class PlayerMovement : MonoBehaviour {
     public GameObject hands;
 
     private Rigidbody rb;
+    private PlayerStats stats;
 
     //Rotation and look 
     private float xRotation;
@@ -24,6 +25,7 @@ public class PlayerMovement : MonoBehaviour {
     private bool grounded;
     private float threshold = 0.01f;
     public LayerMask whatIsGround;
+    public float heightLimit = -50f;
 
     public float counterMovement = 0.175f;
     public float maxSlopeAngle = 35f;
@@ -58,18 +60,18 @@ public class PlayerMovement : MonoBehaviour {
     //Animations
     private Animator animator;
 
-    void Start() {
+    private void Start() {
         GetReferences();
         playerScale = transform.localScale;
         handsScale = new Vector3(crouchScale.x, crouchScale.y * 4, crouchScale.z);
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
-
     private void GetReferences()
     {
         rb = GetComponent<Rigidbody>();
         animator = GetComponentInChildren<Animator>();
+        stats = GetComponent<PlayerStats>();
     }
 
     private void FixedUpdate() {
@@ -78,8 +80,15 @@ public class PlayerMovement : MonoBehaviour {
     }
 
     private void Update() {
+        if (stats.IsDead()) return;
         getInput();
         Look();
+        CheckHeight();
+    }
+
+    private void CheckHeight() {
+        if (transform.position.y <= heightLimit)
+            stats.Die();
     }
 
     private void Movement() {
@@ -143,7 +152,7 @@ public class PlayerMovement : MonoBehaviour {
         if (grounded && readyToJump) {
             readyToJump = false;
 
-            rb.AddForce(Vector2.up * jumpForce * 1f);
+            rb.AddForce(Vector2.up * jumpForce * 1.5f);
             rb.AddForce(normalVector * jumpForce * 1f);
 
             Vector3 vel = rb.velocity;

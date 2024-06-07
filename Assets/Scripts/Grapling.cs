@@ -9,6 +9,7 @@ public class Grapling : MonoBehaviour {
     public LayerMask whatIsGrappleable;
     private Animator animator;
     public LineRenderer lr;
+    private PlayerStats playerStats;
 
     public float maxGrappleDistance;
     public float grappleDelayTime;
@@ -27,9 +28,11 @@ public class Grapling : MonoBehaviour {
     private void GetReferences() {
         pm = GetComponent<PlayerMovement>();
         animator = GetComponentInChildren<Animator>();
+        playerStats = GetComponent<PlayerStats>();
     }
 
     private void Update() {
+        if (playerStats.IsDead()) return;
         if (Input.GetButton("Fire2")) StartGrapple();
         if (grapplingCdTimer > 0) {
             grapplingCdTimer -= Time.deltaTime;
