@@ -16,7 +16,7 @@ MonoBehaviour:
   description: Piu Piu
   magazineSize: 15
   magazineCount: 5
-  fireRate: 0.2
+  fireRate: 0.1
   damage: 50
   prefab: {fileID: 576145251480215586, guid: f0e42b1f9cb4e304f888290b246eeff9, type: 3}
   range: 200

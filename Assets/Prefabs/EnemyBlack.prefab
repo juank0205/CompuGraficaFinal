@@ -981,7 +981,7 @@ MonoBehaviour:
   flash: {fileID: 8341317174473951938, guid: adfafd58e1f60f84f9af45911b3d8c71, type: 3}
   detectionRange: 100
   rotationSpeed: 10
-  bulletSpeed: 150
+  bulletSpeed: 175
   fireRate: 2
   damage: 40
   orientation: {fileID: 309110809811819569}
